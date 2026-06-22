@@ -1187,8 +1187,16 @@ window.onSpotifyIframeApiReady = function(IFrameAPI) {
       var isPaused = e.data.isPaused;
       var duration = e.data.duration;
 
-      /* Capture real preview duration on first update so the timer is exact */
-      if (duration && duration > 1000) _sp_durationMs = duration;
+      /* Capture real preview duration on first update so the timer is exact.
+         Reschedule the end timer immediately with the real duration so the
+         toast + vinyl stop fire at the exact moment the song finishes —
+         not 2-3 seconds late (the default 30,500ms timer overshoot). */
+      if (duration && duration > 1000 && duration !== _sp_durationMs) {
+        _sp_durationMs = duration;
+        if (_sp_endTimer !== null && playerState === PS.PLAYING) {
+          _sp_scheduleEnd();
+        }
+      }
 
       var actuallyPlaying = !isPaused;
       var stateIsPlaying  = (playerState === PS.PLAYING);
